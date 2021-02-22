@@ -142,6 +142,18 @@
     <Resource Include="asset\img\braawser_img.png" />
     <Resource Include="asset\img\braawser_logo.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="asset\img\close_cross.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="close_cross.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="home.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="asset\img\favBraah.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

@@ -4,8 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Braawser"
-        xmlns:wpf="clr-namespace:CefSharp.Wpf;assembly=CefSharp.Wpf"
-        xmlns:views="clr-namespace:Braawser.view"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         WindowState="Maximized"
         MinWidth="500"
@@ -45,7 +44,7 @@
                                 Margin="0,37,0,0"
                                 IsItemsHost="True"
                                 KeyboardNavigation.TabIndex="1"
-                                 Background="#FF423F3F" HorizontalAlignment="Left" Grid.RowSpan="1" Width="38" />
+                                 Background="#FF423F3F" HorizontalAlignment="Left" Grid.RowSpan="1" Width="47" />
                             <Border x:Name="Border"
                                 Grid.Row="1"
                                 BorderThickness="1"
@@ -77,12 +76,50 @@
     </Window.Resources>
     <Grid>
         <TabControl x:Name="MainTabControl" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Background="#FF423F3F" SelectedItem="DefaultTab" BorderThickness="0" TabStripPlacement="Left">
-            <TabItem x:Name="DefaultTab" Header="N" Background="#FF5B5B5B" HorizontalAlignment="Stretch" Height="34" VerticalAlignment="Top" Margin="0" BorderBrush="#FF6A6666" FontSize="20">
+            <TabItem x:Name="DefaultTab" Background="#FF5B5B5B" HorizontalAlignment="Stretch" Height="34" VerticalAlignment="Top" Margin="0" BorderBrush="#FF6A6666" FontSize="20">
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" Margin="-4, 4, 0, 0">
+                        <Image Source="home.png" Width="22"/>
+                        <Image Source="close_cross.png" Width="16" MouseDown="ImageCross_MouseDown"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <TabItem.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Dupliquer" Click="Click_Item_Duplicate"/>
+                        <MenuItem Header="Fermer" Click="Click_Item_Close"/>
+                    </ContextMenu>
+                </TabItem.ContextMenu>
                 <Frame x:Name="DefaultFrame" Margin="-5" Source="view/NavView.xaml"/>
             </TabItem>
         </TabControl>
-        <Button HorizontalAlignment="Left" VerticalAlignment="Bottom" Height="35" Width="39" Click="Button_Click_Add" Margin="-1,0,0,-1">
+        <Button HorizontalAlignment="Left" VerticalAlignment="Bottom" Height="35" Width="39" Click="Button_Click_Add" Margin="3,0,0,0">
             <Image Source="asset/img/add.png" HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </Button>
+        <DockPanel x:Name="FavPanel" HorizontalAlignment="Right" Height="38" LastChildFill="False" VerticalAlignment="Top" Width="auto" Background="#FF423F3F" Panel.ZIndex="999" Margin="0,-1,0,0">
+            <Button Name="FavButton" HorizontalAlignment="Center" VerticalAlignment="Center" Height="38" Width="38" Margin="2,0,0,-1" Background="#00423F3F">
+                <Image Source="asset/img/favBraah.png" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Button.ContextMenu>
+                    <ContextMenu x:Name="FavContextMenu">
+                        <MenuItem Header="Ajouter cette page en favori" Click="MenuItem_Click" />
+                        <Separator/>
+                    </ContextMenu>
+                </Button.ContextMenu>
+                <Button.Triggers>
+                    <EventTrigger SourceName="FavButton" RoutedEvent="Button.Click">
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="FavContextMenu" Storyboard.TargetProperty="(ContextMenu.IsOpen)">
+                                    <DiscreteObjectKeyFrame KeyTime="0:0:0">
+                                        <DiscreteObjectKeyFrame.Value>
+                                            <sys:Boolean>True</sys:Boolean>
+                                        </DiscreteObjectKeyFrame.Value>
+                                    </DiscreteObjectKeyFrame>
+                                </ObjectAnimationUsingKeyFrames>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Button.Triggers>
+            </Button>
+        </DockPanel>
     </Grid>
 </Window>

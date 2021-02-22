@@ -4,6 +4,8 @@ using System;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace Braawser
@@ -18,22 +20,65 @@ namespace Braawser
             InitializeComponent();
         }
 
+        /* Changer l'icône de l'onglet de navigation pour matcher la favicon du site actuel 
+         Utilisation du dispatcher car le site est affiché sur un navView, mais le tabcontrol est sur le MainWindow*/
         public void NavViewChangedLoading(object sender, EventArgs e)
         {
-            MainTabControl.Dispatcher.Invoke(() =>
+            MainTabControl.Dispatcher.BeginInvoke((Action)(() =>          
             {
                 Image img = new Image();
-                BitmapImage bitmap = new BitmapImage();
                 TabItem tab = (TabItem)MainTabControl.SelectedItem;
-                Frame frame = (Frame)tab.Content;
-                NavView view = (NavView)frame.Content;
-                ChromiumWebBrowser browser = view.Browser;
-                bitmap.BeginInit();
-                bitmap.UriSource = new Uri("https://www.google.com/s2/favicons?domain=" + browser.Address);
-                bitmap.EndInit();
-                img.Source = bitmap;
-                tab.Header = img;
-            });
+                img.Source = BitmapImageWithTab(tab);
+                img.Width = 22;
+                StackPanel stackPanel = (StackPanel)tab.Header;
+                stackPanel.Children.RemoveAt(0);
+                stackPanel.Children.Insert(0, img);
+            }));
+        }
+
+        /* Récupération, grâce à l'API Google, de l'icône du site actuel, en size 64, pour les onglets et favoris */
+        private ImageSource BitmapImageWithTab(TabItem tab)
+        {
+            NavView view = GetNavView(tab);
+            ChromiumWebBrowser browser = view.Browser;
+            BitmapImage bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.UriSource = new Uri("https://www.google.com/s2/favicons?sz=64&domain=" + browser.Address);
+            bitmap.EndInit();
+            return bitmap;
+        }
+
+        /* Factorisation pour récupérer la vue d'un onglet */
+        private NavView GetNavView(TabItem tab)
+        {
+            Frame frame = (Frame)tab.Content;
+            return (NavView)frame.Content;
+        }
+
+        /* Fermeture d'un onglet via le clic sur la croix
+         * Ferme l'application si le dernier onglet est ouvert */
+        private void CloseTab(TabItem tab)
+        {
+            if (MainTabControl.Items.Count == 1)
+            {
+                Application.Current.Shutdown();
+            }
+            MainTabControl.Items.Remove(tab);
+        }
+
+        /* Selectionne l'onglet en cours (via le parent du parent de l'image de croix pour fermer) et l'envoie en argument
+         * à la méthode de fermeture d'onglet */
+        private void ImageCross_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            TabItem tab = (TabItem)((StackPanel)(((Image)sender).Parent)).Parent;
+            CloseTab(tab);
+        }
+        /* Selectionne l'onglet en cours (s'il est selectionné par un clic droit) et l'envoie en argument
+         * à la méthode de fermeture d'onglet */
+        private void Click_Item_Close(object sender, RoutedEventArgs e)
+        {
+            TabItem tab = (TabItem)((ContextMenu)(((MenuItem)sender).Parent)).PlacementTarget;
+            CloseTab(tab);
         }
 
         private void Button_Click_Add(object sender, RoutedEventArgs e)
@@ -41,33 +86,104 @@ namespace Braawser
             CreateNewTab();
         }
 
+        /* Construction d'une nouvelle tab / onglet : Un texte placeholder et une image de croix dans un stackpanel, inséré dans
+         * un tab, inséré dans le tabcontrol*/
         public void CreateNewTab(string url = "")
         {
-            TabItem tab = new TabItem
+            if (MainTabControl.Items.Count < 27)
             {
-                Header = "N",
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Top,
-                Height = 34,
-                FontSize = 20
-            };
-            Frame frame = new Frame
-            {
-                Content = new NavView(),
-                Margin = new Thickness(-5)
-            };
-            tab.Content = frame;
-            MainTabControl.Items.Add(tab);
-            MainTabControl.SelectedItem = tab;
-
-            if(url != "")
-            {
-                this.Dispatcher.BeginInvoke((Action)(() =>
+                BitmapImage bitmapImage = new BitmapImage();
+                bitmapImage.BeginInit();
+                bitmapImage.UriSource = new Uri("asset/img/close_cross.png", UriKind.Relative);
+                bitmapImage.EndInit();
+                StackPanel stackPanel = new StackPanel
                 {
-                    NavView view = (NavView)frame.Content;
-                    view.Browser.Address = url;
-                }));
+                    Margin = new Thickness(-4, 4, 0, 0),
+                    Orientation = Orientation.Horizontal
+                };
+                Image imageCross = new Image
+                {
+                    Source = bitmapImage,
+                    Width = 16
+                };
+                imageCross.MouseDown += ImageCross_MouseDown;
+                TextBlock textBlock = new TextBlock
+                {
+                    Text = "N"
+                };
+                stackPanel.Children.Insert(0, textBlock);
+                stackPanel.Children.Insert(1, imageCross);
+                SolidColorBrush bgColor = new SolidColorBrush();
+                bgColor = (SolidColorBrush)(new BrushConverter().ConvertFrom("#FF5B5B5B"));
+                SolidColorBrush borderColor = new SolidColorBrush();
+                borderColor = (SolidColorBrush)(new BrushConverter().ConvertFrom("#FF6A6666"));
+                TabItem tab = new TabItem
+                {
+                    Header = stackPanel,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    VerticalAlignment = VerticalAlignment.Top,
+                    Margin = new Thickness(0),
+                    Height = 34,
+                    FontSize = 20,
+                    Background = bgColor,
+                    BorderBrush = borderColor
+                };
+                Frame frame = new Frame
+                {
+                    Content = new NavView(),
+                    Margin = new Thickness(-5)
+                };
+                tab.Content = frame;
+                MainTabControl.Items.Add(tab);
+                MainTabControl.SelectedItem = tab;
+
+                if (url != "")
+                {
+                    this.Dispatcher.BeginInvoke((Action)(() =>
+                    {
+                        NavView view = (NavView)frame.Content;
+                        view.Browser.Address = url;
+                    }));
+                }
             }
+        }
+
+
+        /* Permet de dupliquer un onglet via un contextmenu (clic droit)  */
+        private void Click_Item_Duplicate(object sender, RoutedEventArgs e)
+        {
+            TabItem tab = (TabItem)((ContextMenu)(((MenuItem)sender).Parent)).PlacementTarget;
+            NavView view = GetNavView(tab);
+            string url = view.Browser.Address;
+            CreateNewTab(url);
+        }
+
+        /* Evènement attribué à la création de nouveaux favoris pour la navigation vers le lien lié */
+        private void GoToFav_Click(object sender, RoutedEventArgs e)
+        {
+            TabItem tab = (TabItem)MainTabControl.SelectedItem;
+            Frame frame = (Frame)tab.Content;
+            NavView view = (NavView)frame.Content;
+            var x = sender;
+            view.Browser.Address = (String)((MenuItem)sender).Header;
+        }
+
+        /* Capture l'url de l'onglet en cours, et créé un favori en l'ajoutant dans un contextmenu */
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            TabItem tab = (TabItem)MainTabControl.SelectedItem;
+            NavView view = GetNavView(tab);
+            Image img = new Image
+            {
+                Source = BitmapImageWithTab(tab)
+            };
+            MenuItem newFav = new MenuItem
+            {
+                Header = view.Browser.Address,
+                Icon = img
+            };
+            newFav.Click += GoToFav_Click;
+            this.FavContextMenu.Items.Add(newFav);
         }
     }
 }

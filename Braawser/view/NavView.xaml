@@ -11,7 +11,7 @@
 
     <Grid>
         <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <DockPanel x:Name="MenuUrl" HorizontalAlignment="Stretch" Height="38" LastChildFill="False" VerticalAlignment="Top" Width="auto" Background="#FF423F3F" Panel.ZIndex="999">
+            <DockPanel x:Name="MenuUrl" HorizontalAlignment="Stretch" Height="38" LastChildFill="True" VerticalAlignment="Top" Width="auto" Background="#FF423F3F" Panel.ZIndex="999">
                 <Button Width="47" Command="{Binding WebBrowser.BackCommand, ElementName=Browser}" Background="#FF3C3C3C" BorderBrush="#FF7A7474">
                     <Image Source="../asset/img/arrow_back.png" Height="24" Width="24" HorizontalAlignment="Center"/>
                 </Button>
@@ -24,9 +24,9 @@
                 <Button Width="47" Click="Button_Click_Home" Background="#FF3C3C3C" Foreground="#FFF9F9F9" BorderBrush="#FF7A7474">
                     <Image Source="../asset/img/home.png" Height="24" Width="24" HorizontalAlignment="Center"/>
                 </Button>
-                <TextBox x:Name="TextUrl" Text="{Binding Address, ElementName=Browser, FallbackValue=www.google.fr}" Width="405" FontSize="20" KeyUp="TextUrl_KeyUp_Navigate" Background="#FF5B5B5B" Foreground="#FFF7F7F7" BorderThickness="1" HorizontalAlignment="Stretch"/>
+                <TextBox x:Name="TextUrl" Text="{Binding Address, ElementName=Browser, FallbackValue=www.google.fr}" Width="auto" FontSize="20" KeyUp="TextUrl_KeyUp_Navigate" Background="#FF5B5B5B" Foreground="#FFF7F7F7" BorderThickness="1" HorizontalAlignment="Stretch"/>
             </DockPanel>
-            <wpf:ChromiumWebBrowser x:Name="Browser" Address="www.google.com" Margin="37,38,0,0" LoadingStateChanged="ChangedLoading_Browser"/>
+            <wpf:ChromiumWebBrowser x:Name="Browser" Address="{x:Static local:NavView.HomeUrl}" Margin="37,38,0,0" LoadingStateChanged="ChangedLoading_Browser"/>
         </Grid>
     </Grid>
 </Page>
