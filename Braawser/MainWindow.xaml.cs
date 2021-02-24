@@ -1,12 +1,15 @@
-﻿using Braawser.view;
+﻿using Braawser.Model;
+using Braawser.view;
 using CefSharp.Wpf;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Utils.IO;
 
 namespace Braawser
 {
@@ -15,9 +18,54 @@ namespace Braawser
     /// </summary>
     public partial class MainWindow : Window
     {
+        public List<Favori> favlist = new List<Favori>();
+
         public MainWindow()
         {
             InitializeComponent();
+            Loaded += MainWindow_Loaded;
+        }
+
+        /* Sérialisation :
+         * A l'ouverture du browser, s'il existe un fichier favori.xml, le lit et met automatiquement
+         la liste des favoris à jour 
+         * S'il ne trouve pas le fichier favori.xml, le try/catch empêche l'erreur et ne fait rien*/
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            Serializer<List<Favori>> serializer = new Serializer<List<Favori>>("favoris.xml", SerializeFormat.Xml);
+
+            try
+            {
+                favlist = serializer.Read("favoris.xml");
+
+                foreach (var item in favlist)
+                {
+
+                    BitmapImage bitmap = new BitmapImage();
+                    bitmap.BeginInit();
+                    bitmap.UriSource = new Uri("https://www.google.com/s2/favicons?sz=64&domain=" + item.Url);
+                    bitmap.EndInit();
+
+                    Image img = new Image
+                    {
+                        Source = bitmap
+                    };
+
+                    MenuItem newFav = new MenuItem
+                    {
+                        Header = item.Url,
+                        Icon = img
+                    };
+
+                    newFav.Click += GoToFav_Click;
+                    this.FavContextMenu.Items.Add(newFav);
+                }
+            }
+
+            catch
+            {
+
+            }
         }
 
         /* Changer l'icône de l'onglet de navigation pour matcher la favicon du site actuel 
@@ -117,9 +165,26 @@ namespace Braawser
                 bgColor = (SolidColorBrush)(new BrushConverter().ConvertFrom("#FF5B5B5B"));
                 SolidColorBrush borderColor = new SolidColorBrush();
                 borderColor = (SolidColorBrush)(new BrushConverter().ConvertFrom("#FF6A6666"));
+
+                //Create ContextMenu
+                ContextMenu contextMenu = new ContextMenu();
+                MenuItem menuItemDup = new MenuItem
+                {
+                    Header = "Dupliquer"
+                };
+                menuItemDup.Click += Click_Item_Duplicate;
+                MenuItem menuItemClose = new MenuItem
+                {
+                    Header = "Fermer"
+                };
+                menuItemClose.Click += Click_Item_Close;
+                contextMenu.Items.Add(menuItemDup);
+                contextMenu.Items.Add(menuItemClose);
+
                 TabItem tab = new TabItem
                 {
                     Header = stackPanel,
+                    ContextMenu = contextMenu,
                     HorizontalAlignment = HorizontalAlignment.Stretch,
                     VerticalAlignment = VerticalAlignment.Top,
                     Margin = new Thickness(0),
@@ -168,7 +233,8 @@ namespace Braawser
             view.Browser.Address = (String)((MenuItem)sender).Header;
         }
 
-        /* Capture l'url de l'onglet en cours, et créé un favori en l'ajoutant dans un contextmenu */
+        /* Capture l'url de l'onglet en cours, et créé un favori en l'ajoutant dans un contextmenu 
+         + Serialization : A chaque ajout de favori, l'ajoute au fichier favori.xml (ou le créé s'il n'existe pas)*/
         private void MenuItem_Click(object sender, RoutedEventArgs e)
         {
             TabItem tab = (TabItem)MainTabControl.SelectedItem;
@@ -177,6 +243,13 @@ namespace Braawser
             {
                 Source = BitmapImageWithTab(tab)
             };
+
+            Favori favori = new Favori(view.Browser.Address);
+            favlist.Add(favori);
+            Serializer<List<Favori>> serializer = new Serializer<List<Favori>>("favoris.xml", SerializeFormat.Xml);
+            serializer.Write(favlist);
+
+
             MenuItem newFav = new MenuItem
             {
                 Header = view.Browser.Address,
