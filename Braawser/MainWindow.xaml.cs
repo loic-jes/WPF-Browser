@@ -18,7 +18,8 @@ namespace Braawser
     /// </summary>
     public partial class MainWindow : Window
     {
-        public List<Favori> favlist = new List<Favori>();
+        private List<Favori> favlist = new List<Favori>();
+        private const int maxTabNumber = 27;
 
         public MainWindow()
         {
@@ -34,7 +35,9 @@ namespace Braawser
         {
             Serializer<List<Favori>> serializer = new Serializer<List<Favori>>("favoris.xml", SerializeFormat.Xml);
 
-            try
+            TFile favori = new TFile("favoris.xml");
+
+            if (favori.Exists)
             {
                 favlist = serializer.Read("favoris.xml");
 
@@ -60,11 +63,6 @@ namespace Braawser
                     newFav.Click += GoToFav_Click;
                     this.FavContextMenu.Items.Add(newFav);
                 }
-            }
-
-            catch
-            {
-
             }
         }
 
@@ -138,7 +136,7 @@ namespace Braawser
          * un tab, inséré dans le tabcontrol*/
         public void CreateNewTab(string url = "")
         {
-            if (MainTabControl.Items.Count < 27)
+            if (MainTabControl.Items.Count < maxTabNumber) // Pour ne pas avoir à gérer l'implantation d'un scroll d'onglets
             {
                 BitmapImage bitmapImage = new BitmapImage();
                 bitmapImage.BeginInit();
@@ -202,7 +200,7 @@ namespace Braawser
                 MainTabControl.Items.Add(tab);
                 MainTabControl.SelectedItem = tab;
 
-                if (url != "")
+                if (string.IsNullOrEmpty(url))
                 {
                     this.Dispatcher.BeginInvoke((Action)(() =>
                     {

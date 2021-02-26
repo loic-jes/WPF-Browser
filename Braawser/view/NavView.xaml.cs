@@ -24,7 +24,7 @@ namespace Braawser.view
     /// </summary>
     public partial class NavView : Page, IRequestHandler
     {
-        public const string HomeUrl = "https://www.google.fr";
+        public static string HomeUrl = "https://www.google.fr";
         private readonly MainWindow Window = (MainWindow)Application.Current.MainWindow;
 
         //Event Changed Loading
@@ -62,7 +62,9 @@ namespace Braawser.view
         private void TextUrl_KeyUp_Navigate(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
+            {
                 Browser.Load(TextUrl.Text);
+            }
         }
 
         /* Toutes les méthodes suivantes sont liées à l'interface IRequestHandler, une seule est réellement utilisée */
