@@ -37,8 +37,11 @@ namespace Braawser.view
             this.ChangedLoading += Window.NavViewChangedLoading;
             Browser.RequestHandler = this;
         }
-        /* Utilisation du delegate afin de réagir à un changement de page, et call la méthode de Mainwindow pour mettre à jour
-         * l'icône de l'onglet*/
+
+        /// <summary>
+        /// Utilisation du delegate afin de réagir à un changement de page, et call la méthode de Mainwindow pour mettre à jour
+        /// l'icône de l'onglet
+        /// </summary>
         private void ChangedLoading_Browser(object sender, LoadingStateChangedEventArgs e)
         {
             if (!e.IsLoading)
@@ -52,13 +55,17 @@ namespace Braawser.view
             }
         }
 
-        /* Bouton Home, pour retourner a l'url définie en tant que page d'accueil */
+        /// <summary>
+        /// Bouton Home, pour retourner a l'url définie en tant que page d'accueil
+        /// <summary>
         private void Button_Click_Home(object sender, RoutedEventArgs e)
         {
             Browser.Load(HomeUrl);
         }
 
-        /* Evènement pour naviguer via la textbox de la barre de navigation */
+        /// <summary>
+        /// Evènement pour naviguer via la textbox de la barre de navigation
+        /// <summary>
         private void TextUrl_KeyUp_Navigate(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter)
@@ -67,7 +74,9 @@ namespace Braawser.view
             }
         }
 
-        /* Toutes les méthodes suivantes sont liées à l'interface IRequestHandler, une seule est réellement utilisée */
+        /// <summary>
+        /// Toutes les méthodes suivantes sont liées à l'interface IRequestHandler, une seule est réellement utilisée
+        /// <summary>
         public bool GetAuthCredentials(IWebBrowser chromiumWebBrowser, IBrowser browser, string originUrl, bool isProxy, string host, int port, string realm, string scheme, IAuthCallback callback)
         {
             return false;
@@ -92,8 +101,9 @@ namespace Braawser.view
         {
         }
 
-
-        /* Permet, si on clique sur un lien hypertexte avec la moulette, d'empêcher la navigation et ouvrir un nouvel onglet */
+        /// <summary>
+        /// Permet, si on clique sur un lien hypertexte avec la moulette, d'empêcher la navigation et ouvrir un nouvel onglet
+        /// </summary>
         public bool OnOpenUrlFromTab(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, string targetUrl, WindowOpenDisposition targetDisposition, bool userGesture)
         {
             if (targetDisposition == CefSharp.WindowOpenDisposition.NewBackgroundTab)
