@@ -18,8 +18,7 @@ namespace Braawser
     /// </summary>
     public partial class MainWindow : Window
     {
-        private List<Favori> favlist = new List<Favori>();
-        private const int maxTabNumber = 27;
+        public List<Favori> favlist = new List<Favori>();
 
         public MainWindow()
         {
@@ -27,22 +26,21 @@ namespace Braawser
             Loaded += MainWindow_Loaded;
         }
 
-        /// <summary>
-        /// Sérialisation :
-        /// A l'ouverture du browser, s'il existe un fichier favori.xml, le lit et met automatiquement
-        /// liste des favoris à jour 
-        /// S'il ne trouve pas le fichier favori.xml, le try/catch empêche l'erreur et ne fait rien
-        /// </summary>
-
+        /* Sérialisation :
+         * A l'ouverture du browser, s'il existe un fichier favori.xml, le lit et met automatiquement
+         la liste des favoris à jour 
+         * S'il ne trouve pas le fichier favori.xml, le try/catch empêche l'erreur et ne fait rien*/
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            Serializer<List<Favori>> serializer = new Serializer<List<Favori>>("favoris.xml", SerializeFormat.Xml);
+            //Serializer<List<Favori>> serializer = new Serializer<List<Favori>>("favoris.xml", SerializeFormat.Xml);
 
-            TFile favori = new TFile("favoris.xml");
 
-            if (favori.Exists)
+            Serializer<List<Favori>> serializerBin = new Serializer<List<Favori>>("favoris.loic-jes", SerializeFormat.Binary);  // Sérialisation en binaire - extension de fichier signature (nom de mon github)
+
+            try
             {
-                favlist = serializer.Read("favoris.xml");
+                //favlist = serializer.Read("favoris.xml");
+                favlist = serializerBin.Read("favoris.loic-jes");
 
                 foreach (var item in favlist)
                 {
@@ -57,9 +55,12 @@ namespace Braawser
                         Source = bitmap
                     };
 
+                    string name = item.Name;
+                    if (string.IsNullOrWhiteSpace(name)) name = item.Url;
+
                     MenuItem newFav = new MenuItem
                     {
-                        Header = item.Url,
+                        Header = name,
                         Icon = img
                     };
 
@@ -67,16 +68,18 @@ namespace Braawser
                     this.FavContextMenu.Items.Add(newFav);
                 }
             }
+
+            catch
+            {
+
+            }
         }
 
-        /// <summary>
-        /// Changer l'icône de l'onglet de navigation pour matcher la favicon du site actuel 
-        /// Utilisation du dispatcher car le site est affiché sur un navView, mais le tabcontrol est sur le MainWindow
-        /// </summary>
-
+        /* Changer l'icône de l'onglet de navigation pour matcher la favicon du site actuel 
+         Utilisation du dispatcher car le site est affiché sur un navView, mais le tabcontrol est sur le MainWindow*/
         public void NavViewChangedLoading(object sender, EventArgs e)
         {
-            MainTabControl.Dispatcher.BeginInvoke((Action)(() =>          
+            MainTabControl.Dispatcher.BeginInvoke((Action)(() =>
             {
                 Image img = new Image();
                 TabItem tab = (TabItem)MainTabControl.SelectedItem;
@@ -88,9 +91,7 @@ namespace Braawser
             }));
         }
 
-        /// <summary>
-        /// Récupération, grâce à l'API Google, de l'icône du site actuel, en size 64, pour les onglets et favoris
-        /// </summary>
+        /* Récupération, grâce à l'API Google, de l'icône du site actuel, en size 64, pour les onglets et favoris */
         private ImageSource BitmapImageWithTab(TabItem tab)
         {
             NavView view = GetNavView(tab);
@@ -102,19 +103,15 @@ namespace Braawser
             return bitmap;
         }
 
-        /// <summary>
-        /// Factorisation pour récupérer la vue d'un onglet
-        /// <summary>
+        /* Factorisation pour récupérer la vue d'un onglet */
         private NavView GetNavView(TabItem tab)
         {
             Frame frame = (Frame)tab.Content;
             return (NavView)frame.Content;
         }
 
-        /// <summary>
-        /// Fermeture d'un onglet via le clic sur la croix
-        /// Ferme l'application si le dernier onglet est ouvert
-        /// <summary>
+        /* Fermeture d'un onglet via le clic sur la croix
+         * Ferme l'application si le dernier onglet est ouvert */
         private void CloseTab(TabItem tab)
         {
             if (MainTabControl.Items.Count == 1)
@@ -124,20 +121,15 @@ namespace Braawser
             MainTabControl.Items.Remove(tab);
         }
 
-        /// <summary>
-        /// Selectionne l'onglet en cours (via le parent du parent de l'image de croix pour fermer) et l'envoie en argument
-        /// à la méthode de fermeture d'onglet
-        /// </summary>
+        /* Selectionne l'onglet en cours (via le parent du parent de l'image de croix pour fermer) et l'envoie en argument
+         * à la méthode de fermeture d'onglet */
         private void ImageCross_MouseDown(object sender, MouseButtonEventArgs e)
         {
             TabItem tab = (TabItem)((StackPanel)(((Image)sender).Parent)).Parent;
             CloseTab(tab);
         }
-
-        /// <summary>
-        /// Selectionne l'onglet en cours (s'il est selectionné par un clic droit) et l'envoie en argument
-        /// à la méthode de fermeture d'onglet 
-        /// </summary>
+        /* Selectionne l'onglet en cours (s'il est selectionné par un clic droit) et l'envoie en argument
+         * à la méthode de fermeture d'onglet */
         private void Click_Item_Close(object sender, RoutedEventArgs e)
         {
             TabItem tab = (TabItem)((ContextMenu)(((MenuItem)sender).Parent)).PlacementTarget;
@@ -149,13 +141,11 @@ namespace Braawser
             CreateNewTab();
         }
 
-        /// <summary>
-        /// Construction d'une nouvelle tab / onglet : Un texte placeholder et une image de croix dans un stackpanel, inséré dans
-        /// un tab, inséré dans le tabcontrol
-        /// </summary>
+        /* Construction d'une nouvelle tab / onglet : Un texte placeholder et une image de croix dans un stackpanel, inséré dans
+         * un tab, inséré dans le tabcontrol*/
         public void CreateNewTab(string url = "")
         {
-            if (MainTabControl.Items.Count < maxTabNumber) // Pour ne pas avoir à gérer l'implantation d'un scroll d'onglets
+            if (MainTabControl.Items.Count < 27)
             {
                 BitmapImage bitmapImage = new BitmapImage();
                 bitmapImage.BeginInit();
@@ -219,7 +209,7 @@ namespace Braawser
                 MainTabControl.Items.Add(tab);
                 MainTabControl.SelectedItem = tab;
 
-                if (string.IsNullOrEmpty(url))
+                if (url != "")
                 {
                     this.Dispatcher.BeginInvoke((Action)(() =>
                     {
@@ -230,9 +220,8 @@ namespace Braawser
             }
         }
 
-        /// <summary>
-        /// Permet de dupliquer un onglet via un contextmenu (clic droit)
-        /// </summary>
+
+        /* Permet de dupliquer un onglet via un contextmenu (clic droit)  */
         private void Click_Item_Duplicate(object sender, RoutedEventArgs e)
         {
             TabItem tab = (TabItem)((ContextMenu)(((MenuItem)sender).Parent)).PlacementTarget;
@@ -241,9 +230,7 @@ namespace Braawser
             CreateNewTab(url);
         }
 
-        /// <summary>
-        /// Evènement attribué à la création de nouveaux favoris pour la navigation vers le lien lié
-        /// </summary>
+        /* Evènement attribué à la création de nouveaux favoris pour la navigation vers le lien lié */
         private void GoToFav_Click(object sender, RoutedEventArgs e)
         {
             TabItem tab = (TabItem)MainTabControl.SelectedItem;
@@ -253,10 +240,8 @@ namespace Braawser
             view.Browser.Address = (String)((MenuItem)sender).Header;
         }
 
-        /// <summary>
-        /// Capture l'url de l'onglet en cours, et créé un favori en l'ajoutant dans un contextmenu 
-        /// Serialization : A chaque ajout de favori, l'ajoute au fichier favori.xml (ou le créé s'il n'existe pas)
-        /// </summary>
+        /* Capture l'url de l'onglet en cours, et créé un favori en l'ajoutant dans un contextmenu 
+         + Serialization : A chaque ajout de favori, l'ajoute au fichier favori.xml (ou le créé s'il n'existe pas)*/
         private void MenuItem_Click(object sender, RoutedEventArgs e)
         {
             TabItem tab = (TabItem)MainTabControl.SelectedItem;
@@ -266,15 +251,22 @@ namespace Braawser
                 Source = BitmapImageWithTab(tab)
             };
 
-            Favori favori = new Favori(view.Browser.Address);
+            string inputRead = new InputBox("Donnez un nom a votre favori ?", "Title", "Arial", 20).ShowDialog();  // Permet de donner une description où un surnom au favori
+
+
+            Favori favori = new Favori(view.Browser.Address, inputRead);
             favlist.Add(favori);
-            Serializer<List<Favori>> serializer = new Serializer<List<Favori>>("favoris.xml", SerializeFormat.Xml);
-            serializer.Write(favlist);
+            //Serializer<List<Favori>> serializer = new Serializer<List<Favori>>("favoris.xml", SerializeFormat.Xml);
+            //serializer.Write(favlist);
+            Serializer<List<Favori>> serializerBin = new Serializer<List<Favori>>("favoris.loic-jes", SerializeFormat.Binary); // Sérialisation en binaire - extension de fichier signature (nom de mon github)
+            serializerBin.Write(favlist);
+
+            if (string.IsNullOrWhiteSpace(inputRead)) inputRead = view.Browser.Address;
 
 
             MenuItem newFav = new MenuItem
             {
-                Header = view.Browser.Address,
+                Header = inputRead,
                 Icon = img
             };
             newFav.Click += GoToFav_Click;
