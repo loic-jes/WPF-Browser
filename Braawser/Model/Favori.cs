@@ -10,12 +10,14 @@ namespace Braawser.Model
     public class Favori
     {
         public string Url { get; set; }
+        public string Name { get; set; }
         public Favori()
         {
 
         }
-        public Favori(string url)
+        public Favori(string url, string name)
         {
+            Name = name;
             Url = url;
         }
     }
